@@ -19,7 +19,7 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError('Failed to log in. Please check your credentials or contact the Blue Wisdom admin.');
+      setError(`Login Error: ${err.message}`);
     }
     setLoading(false);
   }
