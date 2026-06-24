@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .header {
+    background-color: #0f3460;
+    padding: 30px;
+    text-align: center;
+    border-bottom: 4px solid #e2b04a;
+  }
+  .header h1 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .header p {
+    color: #e2b04a;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 5px 0 0 0;
+    font-weight: bold;
+  }
+  .content {
+    padding: 40px 30px;
+    color: #333333;
+    line-height: 1.6;
+  }
+  .greeting {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0f3460;
+    margin-bottom: 20px;
+  }
+  .card {
+    background-color: #f8fafc;
+    border-left: 4px solid #e2b04a;
+    padding: 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 25px 0;
+  }
+  .card-row {
+    margin-bottom: 10px;
+  }
+  .card-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 900;
+    color: #64748b;
+    letter-spacing: 1px;
+    display: block;
+  }
+  .card-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #0f3460;
+  }
+  .summary-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 25px;
+  }
+  .summary-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #0f3460;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .summary-text {
+    font-size: 14px;
+    color: #475569;
+    font-style: italic;
+  }
+  .footer {
+    background-color: #f1f5f9;
+    padding: 20px;
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Blue Wisdom</h1>
+      <p>Transforming Intellectually</p>
+    </div>
+    
+    <div class="content">
+      <div class="greeting">Psychometric Profile Complete</div>
+      
+      <p>A new behavioral and performance profile has just been generated and is ready for your review.</p>
+      
+      <div class="card">
+        <div class="card-row">
+          <span class="card-label">Employee</span>
+          <span class="card-value">{{employee_name}}</span>
+        </div>
+        <div class="card-row">
+          <span class="card-label">Matrix Quadrant</span>
+          <span class="card-value">{{quadrant}}</span>
+        </div>
+        <div>
+          <span class="card-label">Intervention Strategy</span>
+          <span class="card-value" style="color: #d97706;">{{strategy}}</span>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-title">Executive Profile Summary</div>
+        <div class="summary-text">
+          "{{executive_summary}}"
+        </div>
+      </div>
+      
+      <p style="margin-top: 30px; font-size: 13px; color: #64748b; text-align: center;">
+        Log into the Blue Wisdom Performance Dashboard to view the full 5-page PDF profile containing radar charts, KRA tactical execution, and coaching blueprints.
+      </p>
+    </div>
+    
+    <div class="footer">
+      Confidential & Proprietary • Blue Wisdom OS
+    </div>
+  </div>
+</body>
+</html>

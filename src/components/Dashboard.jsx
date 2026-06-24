@@ -1,14 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, ArrowRight } from 'lucide-react';
+import { db, auth } from '../firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function Dashboard({ onNewAssessment }) {
-  // Mock Data based on the Blue Wisdom M1-M4 framework
-  const teamStats = {
-    m4: { count: 5, label: 'High Performers', desc: 'High Ability, High Willingness', strategy: 'Delegate' },
-    m3: { count: 4, label: 'Potential Performers', desc: 'High Ability, Low Willingness', strategy: 'Excite' },
-    m1: { count: 3, label: 'Developing Performers', desc: 'Low Ability, High Willingness', strategy: 'Guide' },
-    m2: { count: 2, label: 'Non-Performers', desc: 'Low Ability, Low Willingness', strategy: 'Direct' },
-  };
+  const [teamStats, setTeamStats] = useState({
+    m4: { count: 0, label: 'High Performers', desc: 'High Ability, High Willingness', strategy: 'Delegate' },
+    m3: { count: 0, label: 'Potential Performers', desc: 'High Ability, Low Willingness', strategy: 'Excite' },
+    m1: { count: 0, label: 'Developing Performers', desc: 'Low Ability, High Willingness', strategy: 'Guide' },
+    m2: { count: 0, label: 'Non-Performers', desc: 'Low Ability, Low Willingness', strategy: 'Direct' },
+  });
+  
+  const [recentAssessments, setRecentAssessments] = useState([]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    
+    const q = query(
+      collection(db, 'assessments'), 
+      where('managerId', '==', auth.currentUser.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const assessments = [];
+      let m4Count = 0, m3Count = 0, m1Count = 0, m2Count = 0;
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        assessments.push({ id: doc.id, ...data });
+        
+        if (data.quadrant?.startsWith('M4')) m4Count++;
+        else if (data.quadrant?.startsWith('M3')) m3Count++;
+        else if (data.quadrant?.startsWith('M1')) m1Count++;
+        else if (data.quadrant?.startsWith('M2')) m2Count++;
+      });
+      
+      // Sort client-side by creation time (descending) to avoid needing a composite index
+      assessments.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis?.() || 0;
+        const timeB = b.createdAt?.toMillis?.() || 0;
+        return timeB - timeA;
+      });
+      
+      setTeamStats(prev => ({
+        ...prev,
+        m4: { ...prev.m4, count: m4Count },
+        m3: { ...prev.m3, count: m3Count },
+        m1: { ...prev.m1, count: m1Count },
+        m2: { ...prev.m2, count: m2Count },
+      }));
+      
+      setRecentAssessments(assessments.slice(0, 3));
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="space-y-6 pb-20">
@@ -72,23 +118,36 @@ export default function Dashboard({ onNewAssessment }) {
           <h3 className="font-bold text-bw-navy">Recent Assessments</h3>
         </div>
         <div className="divide-y divide-gray-100">
-          {[1, 2, 3].map((_, i) => (
-            <div key={i} className="p-4 flex justify-between items-center hover:bg-gray-50 cursor-pointer transition">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500">
-                  EMP
+          {recentAssessments.length === 0 ? (
+            <div className="p-8 text-center text-gray-400 text-sm">No assessments found.</div>
+          ) : (
+            recentAssessments.map((assessment) => (
+              <div key={assessment.id} className="p-4 flex justify-between items-center hover:bg-gray-50 cursor-pointer transition">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-bw-navy text-white rounded-full flex items-center justify-center font-bold">
+                    {assessment.employeeName ? assessment.employeeName.substring(0, 2).toUpperCase() : 'EM'}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm">{assessment.employeeName || 'Unknown Employee'}</h4>
+                    <p className="text-xs text-gray-500">
+                      {assessment.date ? `Assessed on ${assessment.date}` : 'Recently Assessed'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-sm">Employee Name</h4>
-                  <p className="text-xs text-gray-500">Assessed 2 days ago</p>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 text-xs font-bold rounded ${
+                    assessment.quadrant?.startsWith('M4') ? 'bg-yellow-100 text-yellow-700' :
+                    assessment.quadrant?.startsWith('M3') ? 'bg-teal-100 text-teal-800' :
+                    assessment.quadrant?.startsWith('M1') ? 'bg-pink-100 text-pink-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {assessment.quadrant ? assessment.quadrant.split(':')[0] : 'N/A'}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded">M4</span>
-                <ArrowRight className="w-4 h-4 text-gray-400" />
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
