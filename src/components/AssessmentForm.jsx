@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle, Sparkles } from 'lucide-react';
+import { generateActionPlan } from '../api/gemini';
 
 export default function AssessmentForm({ onCancel }) {
   const [step, setStep] = useState(1);
   const [data, setData] = useState({ name: '', ability: 3, willingness: 3, remarks: '' });
   const [reportGenerating, setReportGenerating] = useState(false);
+  const [aiReport, setAiReport] = useState(null);
 
   const abilityAnchors = [
     "1 - Lacks foundational skills, frequent errors.",
@@ -22,8 +24,9 @@ export default function AssessmentForm({ onCancel }) {
     "5 - Highly driven, inspires others, consistently volunteers."
   ];
 
-  const generateReport = () => {
+  const generateReport = async () => {
     setReportGenerating(true);
+    setAiReport(null);
     
     // Determine Quadrant based on BW Logic
     const ability = data.ability;
@@ -36,12 +39,14 @@ export default function AssessmentForm({ onCancel }) {
     else if (ability <= 3 && willingness >= 4) { quadrant = "M1: Developing Performer"; strategy = "Guide"; }
     else { quadrant = "M2: Non-Performer"; strategy = "Direct"; }
 
-    // Mock Gemini AI API Call
-    setTimeout(() => {
-      alert(`[AI Report Generated]\n\nEmployee: ${data.name}\nQuadrant: ${quadrant}\nStrategy: ${strategy}\n\nAI Insight: Based on the remarks, the recommended approach is to ${strategy} by setting specific KRAs tailored to their current gap.`);
-      setReportGenerating(false);
-      onCancel();
-    }, 2000);
+    try {
+      const report = await generateActionPlan(data.name, quadrant, strategy, data.remarks);
+      setAiReport(report);
+    } catch (error) {
+      alert("Error generating report: " + error.message);
+    }
+    
+    setReportGenerating(false);
   };
 
   return (
@@ -135,7 +140,7 @@ export default function AssessmentForm({ onCancel }) {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 4 && !aiReport && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
             <h3 className="font-bold text-lg text-bw-navy border-b pb-2 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-bw-gold" />
@@ -159,11 +164,33 @@ export default function AssessmentForm({ onCancel }) {
                 disabled={reportGenerating}
                 className="flex-[2] bg-bw-gold text-bw-navy p-3 rounded-lg font-bold flex justify-center items-center gap-2 hover:bg-yellow-500 transition disabled:opacity-75"
               >
-                {reportGenerating ? 'Analyzing...' : <><CheckCircle className="w-5 h-5" /> Generate Action Plan</>}
+                {reportGenerating ? 'Generating via Gemini AI...' : <><CheckCircle className="w-5 h-5" /> Generate Action Plan</>}
               </button>
             </div>
           </div>
         )}
+
+        {aiReport && (
+          <div className="space-y-6 animate-in fade-in zoom-in-95">
+             <div className="bg-bw-navy text-white p-6 rounded-xl shadow-lg border border-bw-gold">
+                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-blue-900">
+                  <Sparkles className="w-6 h-6 text-bw-gold" />
+                  <h3 className="text-xl font-bold">Blue Wisdom Action Plan</h3>
+                </div>
+                <div className="prose prose-invert max-w-none text-sm space-y-2 text-gray-200">
+                   {aiReport.split('\n').map((line, i) => {
+                     // Basic markdown bold parsing for the UI
+                     const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+                     return <p key={i} dangerouslySetInnerHTML={{ __html: formattedLine }} />
+                   })}
+                </div>
+             </div>
+             <button onClick={onCancel} className="w-full bg-bw-gold text-bw-navy p-3 rounded-lg font-bold hover:bg-yellow-500 transition">
+                Return to Dashboard
+             </button>
+          </div>
+        )}
+
       </div>
     </div>
   );
