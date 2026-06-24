@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, ArrowRight } from 'lucide-react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
 
 export default function Dashboard({ onNewAssessment }) {
   const [teamStats, setTeamStats] = useState({
@@ -12,13 +12,20 @@ export default function Dashboard({ onNewAssessment }) {
   });
   
   const [recentAssessments, setRecentAssessments] = useState([]);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
+  // Fetch initial batch
   useEffect(() => {
     if (!auth.currentUser) return;
     
+    // NOTE: This query requires a Composite Index (managerId ASC, createdAt DESC)
     const q = query(
       collection(db, 'assessments'), 
-      where('managerId', '==', auth.currentUser.uid)
+      where('managerId', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc'),
+      limit(10)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -35,13 +42,6 @@ export default function Dashboard({ onNewAssessment }) {
         else if (data.quadrant?.startsWith('M2')) m2Count++;
       });
       
-      // Sort client-side by creation time (descending) to avoid needing a composite index
-      assessments.sort((a, b) => {
-        const timeA = a.createdAt?.toMillis?.() || 0;
-        const timeB = b.createdAt?.toMillis?.() || 0;
-        return timeB - timeA;
-      });
-      
       setTeamStats(prev => ({
         ...prev,
         m4: { ...prev.m4, count: m4Count },
@@ -50,11 +50,54 @@ export default function Dashboard({ onNewAssessment }) {
         m2: { ...prev.m2, count: m2Count },
       }));
       
-      setRecentAssessments(assessments.slice(0, 3));
+      setRecentAssessments(assessments);
+      
+      if (snapshot.docs.length > 0) {
+        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      }
+      setHasMore(snapshot.docs.length === 10);
+    }, (error) => {
+      console.error("Dashboard Snapshot Error:", error);
+      if (error.message.includes("requires an index")) {
+        alert("Firestore Index Required! Please open the browser console, click the red Firebase link, and create the required composite index.");
+      }
     });
 
     return () => unsubscribe();
   }, []);
+
+  const loadMore = async () => {
+    if (!lastVisible || !hasMore || !auth.currentUser) return;
+    setLoadingMore(true);
+
+    try {
+      const { getDocs, startAfter } = await import('firebase/firestore');
+      const nextQ = query(
+        collection(db, 'assessments'),
+        where('managerId', '==', auth.currentUser.uid),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastVisible),
+        limit(10)
+      );
+
+      const documentSnapshots = await getDocs(nextQ);
+      const newAssessments = [];
+      
+      documentSnapshots.forEach((doc) => {
+        newAssessments.push({ id: doc.id, ...doc.data() });
+      });
+
+      setRecentAssessments(prev => [...prev, ...newAssessments]);
+      
+      if (documentSnapshots.docs.length > 0) {
+        setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
+      }
+      setHasMore(documentSnapshots.docs.length === 10);
+    } catch (error) {
+      console.error("Load More Error:", error);
+    }
+    setLoadingMore(false);
+  };
 
   return (
     <div className="space-y-6 pb-20">
@@ -121,32 +164,45 @@ export default function Dashboard({ onNewAssessment }) {
           {recentAssessments.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-sm">No assessments found.</div>
           ) : (
-            recentAssessments.map((assessment) => (
-              <div key={assessment.id} className="p-4 flex justify-between items-center hover:bg-gray-50 cursor-pointer transition">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-bw-navy text-white rounded-full flex items-center justify-center font-bold">
-                    {assessment.employeeName ? assessment.employeeName.substring(0, 2).toUpperCase() : 'EM'}
+            <>
+              {recentAssessments.map((assessment) => (
+                <div key={assessment.id} className="p-4 flex justify-between items-center hover:bg-gray-50 cursor-pointer transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-bw-navy text-white rounded-full flex items-center justify-center font-bold">
+                      {assessment.employeeName ? assessment.employeeName.substring(0, 2).toUpperCase() : 'EM'}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">{assessment.employeeName || 'Unknown Employee'}</h4>
+                      <p className="text-xs text-gray-500">
+                        {assessment.date ? `Assessed on ${assessment.date}` : 'Recently Assessed'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-sm">{assessment.employeeName || 'Unknown Employee'}</h4>
-                    <p className="text-xs text-gray-500">
-                      {assessment.date ? `Assessed on ${assessment.date}` : 'Recently Assessed'}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 text-xs font-bold rounded ${
+                      assessment.quadrant?.startsWith('M4') ? 'bg-yellow-100 text-yellow-700' :
+                      assessment.quadrant?.startsWith('M3') ? 'bg-teal-100 text-teal-800' :
+                      assessment.quadrant?.startsWith('M1') ? 'bg-pink-100 text-pink-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {assessment.quadrant ? assessment.quadrant.split(':')[0] : 'N/A'}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 text-xs font-bold rounded ${
-                    assessment.quadrant?.startsWith('M4') ? 'bg-yellow-100 text-yellow-700' :
-                    assessment.quadrant?.startsWith('M3') ? 'bg-teal-100 text-teal-800' :
-                    assessment.quadrant?.startsWith('M1') ? 'bg-pink-100 text-pink-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
-                    {assessment.quadrant ? assessment.quadrant.split(':')[0] : 'N/A'}
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
+              ))}
+              {hasMore && (
+                <div className="p-4 border-t border-gray-100 text-center">
+                  <button 
+                    onClick={loadMore} 
+                    disabled={loadingMore}
+                    className="text-bw-navy font-bold text-sm hover:underline disabled:opacity-50"
+                  >
+                    {loadingMore ? 'Loading...' : 'Load More Assessments'}
+                  </button>
                 </div>
-              </div>
-            ))
+              )}
+            </>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, CheckCircle, Sparkles, ChevronRight, ChevronLeft, Download, Mail } from 'lucide-react';
 import { generateActionPlan } from '../api/gemini';
 import { db, auth } from '../firebase';
@@ -8,7 +8,10 @@ import html2pdf from 'html2pdf.js';
 import emailjs from '@emailjs/browser';
 
 export default function AssessmentForm({ onCancel }) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => {
+    const saved = localStorage.getItem('bw_assessment_step');
+    return saved ? JSON.parse(saved) : 1;
+  });
   const [reportGenerating, setReportGenerating] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [aiReport, setAiReport] = useState(null);
@@ -16,38 +19,50 @@ export default function AssessmentForm({ onCancel }) {
   const [strategyState, setStrategyState] = useState('');
   const reportRef = useRef();
 
-  const [data, setData] = useState({
-    name: '',
-    department: '',
-    organization: '',
-    location: '',
-    role: '',
-    reportingManager: '',
-    hod: '',
-    assessorEmail: '',
-    date: new Date().toISOString().split('T')[0],
-    kra1: '',
-    kra2: '',
-    kra3: '',
-    overallPerformance: 'Average',
-    ability: {
-      jobExpertise: 3,
-      problemSolving: 3,
-      qualityOfWork: 3,
-      collaboration: 3,
-      adaptability: 3,
-      planning: 3
-    },
-    willingness: {
-      proactiveness: 3,
-      commitment: 3,
-      positiveAttitude: 3,
-      opennessToFeedback: 3,
-      engagement: 3,
-      continuousImprovement: 3
-    },
-    remarks: ''
+  const [data, setData] = useState(() => {
+    const saved = localStorage.getItem('bw_assessment_data');
+    if (saved) return JSON.parse(saved);
+    return {
+      name: '',
+      department: '',
+      organization: '',
+      location: '',
+      role: '',
+      reportingManager: '',
+      hod: '',
+      assessorEmail: '',
+      date: new Date().toISOString().split('T')[0],
+      kra1: '',
+      kra2: '',
+      kra3: '',
+      overallPerformance: 'Average',
+      ability: {
+        jobExpertise: 3,
+        problemSolving: 3,
+        qualityOfWork: 3,
+        collaboration: 3,
+        adaptability: 3,
+        planning: 3
+      },
+      willingness: {
+        proactiveness: 3,
+        commitment: 3,
+        positiveAttitude: 3,
+        opennessToFeedback: 3,
+        engagement: 3,
+        continuousImprovement: 3
+      },
+      remarks: ''
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem('bw_assessment_step', JSON.stringify(step));
+  }, [step]);
+
+  useEffect(() => {
+    localStorage.setItem('bw_assessment_data', JSON.stringify(data));
+  }, [data]);
 
   const overallPerformanceOptions = ["Poor", "Below average", "Average", "Above average", "Excellent"];
 
@@ -118,6 +133,11 @@ export default function AssessmentForm({ onCancel }) {
           createdAt: serverTimestamp()
         });
       }
+
+      // Clear local cache upon successful generation
+      localStorage.removeItem('bw_assessment_step');
+      localStorage.removeItem('bw_assessment_data');
+      
     } catch (error) {
       alert("Error generating report: " + error.message);
     }
