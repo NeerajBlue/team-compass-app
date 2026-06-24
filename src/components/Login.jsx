@@ -74,6 +74,14 @@ export default function Login() {
           <Link to="/forgot-password" className="text-bw-navy font-bold hover:underline">Forgot Password?</Link>
           <span>Need an account? <Link to="/signup" className="text-bw-navy font-bold hover:underline">Sign Up</Link></span>
         </div>
+
+        {/* TEMPORARY DEBUG INFO */}
+        <div className="text-xs text-gray-400 text-center mt-4 border-t pt-4">
+          <p>Key Length: {import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY.length : 'missing'}</p>
+          <p>Starts with: {import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY.charAt(0) : 'missing'}</p>
+          <p>Ends with: {import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY.charAt(import.meta.env.VITE_FIREBASE_API_KEY.length - 1) : 'missing'}</p>
+        </div>
+
       </div>
     </div>
   );
