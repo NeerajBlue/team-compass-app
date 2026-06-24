@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import Dashboard from './components/Dashboard';
 import AssessmentForm from './components/AssessmentForm';
 import Login from './components/Login';
+import Signup from './components/Signup';
+import ForgotPassword from './components/ForgotPassword';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -74,6 +76,8 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/" element={
             <PrivateRoute>
               <MainLayout />
