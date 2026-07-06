@@ -70,11 +70,14 @@ function MainLayout() {
   );
 }
 
+import LeadMagnet from './components/LeadMagnet';
+
 export default function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
+          <Route path="/lite" element={<LeadMagnet />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
