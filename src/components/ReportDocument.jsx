@@ -26,7 +26,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
   const PageHeader = () => (
     <div className="flex justify-between items-center border-b-[3px] border-bw-gold pb-4 mb-8">
       <div className="flex items-center gap-3">
-         <Compass className="w-8 h-8 text-bw-navy" />
+         <img src="/images/od-assessment/media__1782068252944.png" alt="Blue Wisdom Logo" className="w-12 h-12 object-contain" />
          <div>
             <h1 className="text-2xl font-black text-bw-navy tracking-tight uppercase leading-none">Blue Wisdom</h1>
             <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-bw-gold mt-1">Transforming Intellectually</div>
@@ -40,8 +40,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
   );
 
   const Page = ({ children }) => (
-    <div className="bg-white p-10 mx-auto relative shadow-2xl overflow-hidden" style={{ width: '210mm', minHeight: '297mm', pageBreakAfter: 'always', boxSizing: 'border-box' }}>
-      {/* Subtle background pattern */}
+    <div className="page-break bg-white p-10 mx-auto relative shadow-2xl overflow-hidden" style={{ width: '210mm', boxSizing: 'border-box' }}>
       <div className="absolute top-0 right-0 w-64 h-64 bg-bw-navy opacity-[0.03] rounded-bl-full pointer-events-none -z-10" />
       <PageHeader />
       {children}
@@ -51,7 +50,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
   return (
     <div ref={ref} className="pdf-container bg-gray-200 text-gray-800 font-sans">
       
-      {/* PAGE 1: Executive Profile (Thomas Profiling Style) */}
+      {/* PAGE 1: Executive Profile */}
       <Page>
          <div className="flex gap-8 mb-12">
             <div className="w-1/3 bg-bw-navy text-white rounded-2xl p-8 shadow-lg flex flex-col justify-center items-center text-center relative overflow-hidden">
@@ -155,7 +154,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
         </div>
 
         <div className="grid grid-cols-2 gap-8">
-           {/* Ability Chart */}
            <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-md p-6 flex flex-col items-center relative">
               <div className="absolute top-0 left-0 w-full h-1 bg-bw-navy rounded-t-2xl" />
               <h4 className="text-lg font-black text-bw-navy uppercase tracking-wide mb-2">Ability (Competence)</h4>
@@ -171,7 +169,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
               </div>
            </div>
 
-           {/* Willingness Chart */}
            <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-md p-6 flex flex-col items-center relative">
               <div className="absolute top-0 left-0 w-full h-1 bg-bw-gold rounded-t-2xl" />
               <h4 className="text-lg font-black text-bw-navy uppercase tracking-wide mb-2">Willingness (Commitment)</h4>
@@ -188,7 +185,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
            </div>
         </div>
 
-        {/* Competency Deep Dive */}
         <div className="grid grid-cols-2 gap-8 mt-8">
              <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                <h4 className="font-black text-bw-navy uppercase mb-4 text-sm tracking-widest border-b border-gray-300 pb-2">Cognitive Superpowers</h4>
@@ -265,7 +261,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
         </div>
 
         <div className="grid grid-cols-2 gap-8 mb-10">
-           {/* Coaching Tactics */}
            <div className="bg-bw-navy text-white rounded-2xl p-8 shadow-xl relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-bl-full" />
                <h4 className="text-lg font-black text-bw-gold mb-6 uppercase tracking-wide flex items-center gap-2"><Star className="w-5 h-5"/> Coaching Tactics</h4>
@@ -280,7 +275,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
            </div>
 
            <div className="flex flex-col gap-6">
-              {/* Engagement Status */}
               <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-sm">
                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Engagement Level</h4>
                  <div className="text-lg font-bold text-bw-navy mb-4">{aiReport.willingnessAndMindset.engagementLevel}</div>
@@ -289,7 +283,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                  <div className="text-sm font-bold bg-gray-50 p-3 rounded border-l-4 border-bw-gold text-gray-800">{aiReport.willingnessAndMindset.retentionRisk}</div>
               </div>
               
-              {/* Manager Interventions */}
               <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-sm flex-1">
                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Urgent Interventions</h4>
                  <ul className="space-y-3">
@@ -301,7 +294,6 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
            </div>
         </div>
 
-        {/* Manager Action Items */}
         <h4 className="text-lg font-black text-bw-navy mb-6 border-b-2 border-gray-200 pb-2 uppercase tracking-wide">3-Week Manager Checklist</h4>
         <div className="grid grid-cols-3 gap-4 mb-10">
            {aiReport.managerActionItems.slice(0, 3).map((item, idx) => (
@@ -324,8 +316,28 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
              </div>
            ))}
         </div>
-         
-        <div className="mt-16 pt-6 border-t border-gray-200 flex justify-between items-center text-gray-400 text-xs font-bold uppercase tracking-widest">
+      </Page>
+
+      {/* PAGE 5: Post Assessment Visuals & Disclaimer */}
+      <Page>
+        <div className="mb-10 text-center">
+          <h3 className="text-3xl font-black text-bw-navy uppercase tracking-widest mb-2">Team Compass Blueprint</h3>
+          <p className="text-sm text-gray-500 font-medium">Visual strategies for continuous development and team growth.</p>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-6 mb-12">
+           <img src="/images/od-assessment/spark_poster_1782008819550.png" alt="Spark Poster" className="rounded-xl shadow-md w-full object-cover" />
+           <img src="/images/od-assessment/momentum_poster_1782008845231.png" alt="Momentum Poster" className="rounded-xl shadow-md w-full object-cover" />
+        </div>
+        <div className="grid grid-cols-2 gap-6 mb-12">
+           <img src="/images/od-assessment/forge_poster_1782008833028.png" alt="Forge Poster" className="rounded-xl shadow-md w-full object-cover" />
+           <img src="/images/od-assessment/journey_poster_1782008870447.png" alt="Journey Poster" className="rounded-xl shadow-md w-full object-cover" />
+        </div>
+
+        <div className="bg-gray-100 p-6 rounded-xl border border-gray-200 mt-16 text-[10px] text-gray-500 text-justify">
+           <strong>CONFIDENTIALITY NOTICE & DISCLAIMER:</strong> This document and the psychometric analysis contained herein are strictly confidential and intended solely for the use of the authorized reporting manager and human resources personnel. The insights provided by the Blue Wisdom Assessment platform are generated through algorithmic analysis based on inputted performance metrics. While intended to provide actionable developmental guidance, this report does not constitute definitive psychological evaluation or absolute guarantees of future performance. Management decisions regarding compensation, termination, or formal disciplinary action should incorporate this analysis only as one of several data points, alongside formal performance reviews, documented feedback, and company policy guidelines. Distribution, reproduction, or unauthorized sharing of this document is strictly prohibited.
+        </div>
+        <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center text-gray-400 text-xs font-bold uppercase tracking-widest">
            <div>Generated by Blue Wisdom OS</div>
            <div>Confidential & Proprietary</div>
         </div>

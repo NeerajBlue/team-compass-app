@@ -148,11 +148,12 @@ export default function AssessmentForm({ onCancel }) {
   const downloadPDF = () => {
     const element = reportRef.current;
     const opt = {
-      margin:       0,
+      margin:       [0, 0, 0, 0],
       filename:     `BW_Performance_Report_${data.name.replace(/ /g, '_')}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: 'css', before: '.page-break' }
     };
 
     html2pdf().set(opt).from(element).save();
@@ -161,23 +162,32 @@ export default function AssessmentForm({ onCancel }) {
   const sendEmail = async () => {
     setEmailSending(true);
     try {
-      const templateParams = {
-        to_email: data.assessorEmail,
+      const getTemplateParams = (recipientEmail) => ({
+        to_email: recipientEmail,
         employee_name: data.name,
         assessor_email: data.assessorEmail,
         quadrant: quadrantState,
         strategy: strategyState,
         executive_summary: aiReport?.executiveSummary?.overview || "Profile generated successfully."
-      };
+      });
 
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-        templateParams,
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      // We send one email to the reporting manager, and one to neerajnis@gmail.com
+      const recipients = [];
+      if (data.reportingManager) recipients.push(data.reportingManager);
+      recipients.push("neerajnis@gmail.com");
+
+      const emailPromises = recipients.map(recipient => 
+        emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          getTemplateParams(recipient),
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        )
       );
+
+      await Promise.all(emailPromises);
       
-      alert("Executive Summary sent successfully to " + data.assessorEmail);
+      alert("Executive Summary sent successfully!");
     } catch (error) {
       console.error("EmailJS Error:", error);
       alert("Failed to send email. Please check EmailJS configuration.");

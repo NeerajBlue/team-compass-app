@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Users, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Users, ArrowRight, Download } from 'lucide-react';
 import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
+import ReportDocument from './ReportDocument';
+import html2pdf from 'html2pdf.js';
 
 export default function Dashboard({ onNewAssessment }) {
   const [teamStats, setTeamStats] = useState({
@@ -15,6 +17,26 @@ export default function Dashboard({ onNewAssessment }) {
   const [lastVisible, setLastVisible] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const hiddenReportRef = useRef();
+
+  const downloadAssessmentPDF = (assessment) => {
+    setSelectedAssessment(assessment);
+    setTimeout(() => {
+      if (!hiddenReportRef.current) return;
+      const opt = {
+        margin:       [0, 0, 0, 0],
+        filename:     `BW_Performance_Report_${(assessment.employeeName || 'Employee').replace(/ /g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: 'css', before: '.page-break' }
+      };
+      html2pdf().set(opt).from(hiddenReportRef.current).save().then(() => {
+         setSelectedAssessment(null);
+      });
+    }, 500);
+  };
 
   // Fetch initial batch
   useEffect(() => {
@@ -187,6 +209,13 @@ export default function Dashboard({ onNewAssessment }) {
                     }`}>
                       {assessment.quadrant ? assessment.quadrant.split(':')[0] : 'N/A'}
                     </span>
+                    <button 
+                       onClick={(e) => { e.stopPropagation(); downloadAssessmentPDF(assessment); }}
+                       className="p-2 text-bw-navy hover:bg-blue-50 rounded-full transition flex items-center justify-center"
+                       title="Download PDF"
+                    >
+                       <Download className="w-4 h-4" />
+                    </button>
                     <ArrowRight className="w-4 h-4 text-gray-400" />
                   </div>
                 </div>
@@ -206,6 +235,26 @@ export default function Dashboard({ onNewAssessment }) {
           )}
         </div>
       </div>
+    </div>
+      
+      {/* Hidden Report Container for PDF Generation */}
+      {selectedAssessment && (
+        <div style={{ display: 'none' }}>
+          <ReportDocument 
+             ref={hiddenReportRef}
+             data={{
+                name: selectedAssessment.employeeName || 'Unknown',
+                role: selectedAssessment.role || '',
+                date: selectedAssessment.date || '',
+                ability: selectedAssessment.ability || { jobExpertise: 3, problemSolving: 3, qualityOfWork: 3, collaboration: 3, adaptability: 3, planning: 3 },
+                willingness: selectedAssessment.willingness || { proactiveness: 3, commitment: 3, positiveAttitude: 3, opennessToFeedback: 3, engagement: 3, continuousImprovement: 3 }
+             }}
+             aiReport={selectedAssessment.aiReport}
+             quadrant={selectedAssessment.quadrant}
+             strategy={selectedAssessment.strategy}
+          />
+        </div>
+      )}
     </div>
   );
 }
