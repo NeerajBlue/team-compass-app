@@ -5,6 +5,17 @@ import { Sparkles, BookOpen, Target, AlertTriangle, TrendingUp, Compass, Award, 
 const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) => {
   if (!data || !aiReport || !aiReport.executiveSummary) return null;
 
+  const renderBoldText = (text) => {
+    if (typeof text !== 'string') return text;
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        return <strong key={index} className="font-bold">{part}</strong>;
+      }
+      return part;
+    });
+  };
+
   const abilityData = [
     { subject: 'Job Expertise', A: data.ability.jobExpertise, fullMark: 5 },
     { subject: 'Problem Solving', A: data.ability.problemSolving, fullMark: 5 },
@@ -130,7 +141,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                      {aiReport.quadrantAnalysis.strategyJustification.map((just, i) => (
                         <li key={i} className="text-sm text-gray-700 font-medium flex items-start gap-2">
                            <div className="w-1.5 h-1.5 bg-bw-gold rounded-full mt-1.5 flex-shrink-0" />
-                           {just}
+                           <span>{renderBoldText(just)}</span>
                         </li>
                      ))}
                    </ul>
@@ -190,7 +201,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                <h4 className="font-black text-bw-navy uppercase mb-4 text-sm tracking-widest border-b border-gray-300 pb-2">Cognitive Superpowers</h4>
                <ul className="space-y-3">
                  {aiReport.competencyDevelopment.superPowers.map((s, i) => (
-                    <li key={i} className="text-sm text-gray-800 font-medium">{s}</li>
+                    <li key={i} className="text-sm text-gray-800 font-medium">{renderBoldText(s)}</li>
                  ))}
                </ul>
              </div>
@@ -198,7 +209,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                <h4 className="font-black text-bw-navy uppercase mb-4 text-sm tracking-widest border-b border-gray-300 pb-2">Cognitive Blindspots</h4>
                <ul className="space-y-3">
                  {aiReport.competencyDevelopment.blindSpots.map((b, i) => (
-                    <li key={i} className="text-sm text-gray-800 font-medium">{b}</li>
+                    <li key={i} className="text-sm text-gray-800 font-medium">{renderBoldText(b)}</li>
                  ))}
                </ul>
              </div>
@@ -232,7 +243,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                    <strong className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-3">Tactical Action Steps</strong>
                    <ul className="space-y-3">
                      {kra.actionSteps.map((step, i) => (
-                       <li key={i} className="text-sm font-medium text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm">{step}</li>
+                       <li key={i} className="text-sm font-medium text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm">{renderBoldText(step)}</li>
                      ))}
                    </ul>
                  </div>
@@ -268,7 +279,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                  {aiReport.competencyDevelopment.coachingTactics.map((tactic, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                        <div className="mt-1 w-2 h-2 bg-bw-gold rounded-full flex-shrink-0 shadow-[0_0_8px_rgba(226,176,74,0.8)]" />
-                       <span className="text-sm text-gray-200 font-medium leading-relaxed">{tactic}</span>
+                       <span className="text-sm text-gray-200 font-medium leading-relaxed">{renderBoldText(tactic)}</span>
                     </li>
                  ))}
                </ul>
@@ -287,7 +298,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Urgent Interventions</h4>
                  <ul className="space-y-3">
                     {aiReport.willingnessAndMindset.managerInterventions.map((inv, idx) => (
-                       <li key={idx} className="text-sm font-medium text-gray-700 bg-gray-50 p-2 rounded border border-gray-100">{inv}</li>
+                       <li key={idx} className="text-sm font-medium text-gray-700 bg-gray-50 p-2 rounded border border-gray-100">{renderBoldText(inv)}</li>
                     ))}
                  </ul>
               </div>
@@ -299,7 +310,7 @@ const ReportDocument = forwardRef(({ data, aiReport, quadrant, strategy }, ref) 
            {aiReport.managerActionItems.slice(0, 3).map((item, idx) => (
               <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm">
                  <div className="text-[10px] font-black uppercase text-bw-gold tracking-widest mb-2 bg-white inline-block px-2 py-1 rounded border border-gray-100">Week {idx + 1}</div>
-                 <div className="text-sm text-gray-800 font-semibold">{item}</div>
+                 <div className="text-sm text-gray-800 font-semibold">{renderBoldText(item)}</div>
               </div>
            ))}
         </div>
