@@ -128,6 +128,7 @@ export default function Dashboard({ onNewAssessment }) {
   };
 
   return (
+    <>
     <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-bw-navy">Team Overview</h2>
@@ -261,6 +262,6 @@ export default function Dashboard({ onNewAssessment }) {
           />
         </div>
       )}
-    </div>
+    </>
   );
 }
