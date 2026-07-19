@@ -42,12 +42,10 @@ export default function Dashboard({ onNewAssessment }) {
   useEffect(() => {
     if (!auth.currentUser) return;
     
-    // NOTE: This query requires a Composite Index (managerId ASC, createdAt DESC)
+    // Fix: Removed orderBy('createdAt', 'desc') to avoid composite index error. We fetch more and sort locally.
     const q = query(
       collection(db, 'assessments'), 
-      where('managerId', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc'),
-      limit(10)
+      where('managerId', '==', auth.currentUser.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -72,12 +70,18 @@ export default function Dashboard({ onNewAssessment }) {
         m2: { ...prev.m2, count: m2Count },
       }));
       
-      setRecentAssessments(assessments);
       
-      if (snapshot.docs.length > 0) {
-        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-      }
-      setHasMore(snapshot.docs.length === 10);
+      // Sort assessments locally by createdAt
+      assessments.sort((a, b) => {
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return b.createdAt.toMillis() - a.createdAt.toMillis();
+      });
+      
+      setRecentAssessments(assessments.slice(0, 10)); // Initial 10
+      
+      setHasMore(assessments.length > 10);
+      setLastVisible(10); // Store index for client-side pagination
     }, (error) => {
       console.error("Dashboard Snapshot Error:", error);
       if (error.message.includes("requires an index")) {
@@ -89,32 +93,34 @@ export default function Dashboard({ onNewAssessment }) {
   }, []);
 
   const loadMore = async () => {
-    if (!lastVisible || !hasMore || !auth.currentUser) return;
+    if (!hasMore || !auth.currentUser) return;
     setLoadingMore(true);
 
     try {
-      const { getDocs, startAfter } = await import('firebase/firestore');
-      const nextQ = query(
+      const q = query(
         collection(db, 'assessments'),
-        where('managerId', '==', auth.currentUser.uid),
-        orderBy('createdAt', 'desc'),
-        startAfter(lastVisible),
-        limit(10)
+        where('managerId', '==', auth.currentUser.uid)
       );
 
-      const documentSnapshots = await getDocs(nextQ);
-      const newAssessments = [];
+      const documentSnapshots = await import('firebase/firestore').then(m => m.getDocs(q));
+      const allAssessments = [];
       
       documentSnapshots.forEach((doc) => {
-        newAssessments.push({ id: doc.id, ...doc.data() });
+        allAssessments.push({ id: doc.id, ...doc.data() });
       });
 
-      setRecentAssessments(prev => [...prev, ...newAssessments]);
+      // Sort locally
+      allAssessments.sort((a, b) => {
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return b.createdAt.toMillis() - a.createdAt.toMillis();
+      });
+
+      const nextIndex = lastVisible + 10;
+      setRecentAssessments(allAssessments.slice(0, nextIndex));
       
-      if (documentSnapshots.docs.length > 0) {
-        setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      }
-      setHasMore(documentSnapshots.docs.length === 10);
+      setLastVisible(nextIndex);
+      setHasMore(allAssessments.length > nextIndex);
     } catch (error) {
       console.error("Load More Error:", error);
     }
