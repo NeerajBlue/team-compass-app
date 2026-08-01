@@ -7,3 +7,49 @@
     @apply bg-bw-light text-bw-dark antialiased;
   }
 }
+
+/* PDF Export A4 Rules (Dharmaj Standard) */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  height: 297mm;
+  max-height: 297mm;
+  padding: 0;
+  page-break-after: always;
+  box-sizing: border-box;
+  position: relative;
+  background-color: #ffffff;
+  margin: 0 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.page-content {
+  padding: 20px 45px 15px 45px;
+  flex-grow: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* keep things tight */
+}
+
+@media print { 
+  @page { size: A4; margin: 0; }
+  body { background: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; line-height: 1.45; } 
+  .page { 
+    margin: 0; 
+    box-shadow: none; 
+    border: none; 
+    width: 210mm; 
+    height: 297mm; 
+    max-height: 297mm; 
+    overflow: hidden; 
+    page-break-after: always; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+  }
+}
