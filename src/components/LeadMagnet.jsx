@@ -37,53 +37,66 @@ export default function LeadMagnet() {
       const res = { quadrant: q, strategy: s, description: desc };
 
       // 1. Save to Firestore
-      await addDoc(collection(db, 'leads'), {
-        ...leadInfo,
-        abilityScore: ability,
-        willingnessScore: willingness,
-        quadrant: q,
-        strategy: s,
-        source: 'Website Lead Magnet',
-        createdAt: serverTimestamp()
-      });
+      try {
+        await addDoc(collection(db, 'leads'), {
+          ...leadInfo,
+          abilityScore: ability,
+          willingnessScore: willingness,
+          quadrant: q,
+          strategy: s,
+          source: 'Website Lead Magnet',
+          createdAt: serverTimestamp()
+        });
+      } catch (fbError) {
+        console.error("Firestore Error:", fbError);
+        alert(`Database Error: ${fbError.message}`);
+        setLoading(false);
+        return;
+      }
 
       // 2. Send Teaser Email to Lead
-      const teaserSummary = `Thank you for using the Team Compass Lite Assessment.\n\nYour team member falls into ${q}. The recommended leadership strategy is to ${s}. ${desc}\n\nTo unlock the full 5-page psychometric report and custom Manager Intervention Blueprint, book an OD Diagnosis Call with us today at www.bluewisdom.in.`;
-      
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-        {
-          to_email: leadInfo.email,
-          employee_name: "Your Assessed Team Member",
-          assessor_email: leadInfo.email,
-          quadrant: q,
-          strategy: s,
-          executive_summary: teaserSummary
-        },
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-      );
+      try {
+        const teaserSummary = `Thank you for using the Team Compass Lite Assessment.\n\nYour team member falls into ${q}. The recommended leadership strategy is to ${s}. ${desc}\n\nTo unlock the full 5-page psychometric report and custom Manager Intervention Blueprint, book an OD Diagnosis Call with us today at www.bluewisdom.in.`;
+        
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          {
+            to_email: leadInfo.email,
+            employee_name: "Your Assessed Team Member",
+            assessor_email: leadInfo.email,
+            quadrant: q,
+            strategy: s,
+            executive_summary: teaserSummary
+          },
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        );
 
-      // 3. Notify Neeraj
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-        {
-          to_email: 'neerajnis@gmail.com',
-          employee_name: `NEW LEAD: ${leadInfo.name} (${leadInfo.company})`,
-          assessor_email: leadInfo.email,
-          quadrant: q,
-          strategy: s,
-          executive_summary: `Phone: ${leadInfo.phone}\nCompany: ${leadInfo.company}\nThey just generated a Lite assessment.`
-        },
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-      );
+        // 3. Notify Neeraj
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          {
+            to_email: 'neerajnis@gmail.com',
+            employee_name: `NEW LEAD: ${leadInfo.name} (${leadInfo.company})`,
+            assessor_email: leadInfo.email,
+            quadrant: q,
+            strategy: s,
+            executive_summary: `Phone: ${leadInfo.phone}\nCompany: ${leadInfo.company}\nThey just generated a Lite assessment.`
+          },
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        );
+      } catch (emailError) {
+        console.error("Email Error:", emailError);
+        // We will just alert but NOT stop the user from seeing their result
+        alert("Note: We couldn't send the email (API Keys might be missing on Vercel), but here are your results anyway!");
+      }
 
       setResult(res);
       setStep(3);
     } catch (error) {
-      console.error("Error submitting lead magnet:", error);
-      alert("Oops! Something went wrong. Please try again.");
+      console.error("Unexpected error:", error);
+      alert(`Unexpected Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
