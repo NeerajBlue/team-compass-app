@@ -92,6 +92,34 @@ export default function LeadMagnet() {
         alert("Note: We couldn't send the email (API Keys might be missing on Vercel), but here are your results anyway!");
       }
 
+      // 4. Send to CRM Webhook (Zapier/Make)
+      try {
+        const webhookUrl = import.meta.env.VITE_CRM_WEBHOOK_URL;
+        if (webhookUrl) {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: leadInfo.name,
+              email: leadInfo.email,
+              phone: leadInfo.phone,
+              company: leadInfo.company,
+              quadrant: q,
+              strategy: s,
+              abilityScore: ability,
+              willingnessScore: willingness,
+              source: 'Team Compass Lead Magnet',
+              timestamp: new Date().toISOString()
+            })
+          });
+        }
+      } catch (webhookError) {
+        console.error("Webhook Error:", webhookError);
+        // Silently fail if CRM webhook is down, so user experience is not impacted
+      }
+
       setResult(res);
       setStep(3);
     } catch (error) {
