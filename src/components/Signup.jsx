@@ -4,6 +4,8 @@ import { Compass, UserPlus } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function Signup() {
+  const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -22,7 +24,7 @@ export default function Signup() {
     try {
       setError('');
       setLoading(true);
-      await signup(email, password);
+      await signup(email, password, name, companyName);
       navigate('/');
     } catch (err) {
       setError(`Failed to create an account: ${err.message}`);
@@ -45,6 +47,28 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
+            <label className="block text-sm font-semibold text-bw-navy mb-1">Full Name</label>
+            <input 
+              type="text" 
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-bw-gold outline-none transition"
+              placeholder="Jane Doe"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-bw-navy mb-1">Company Name</label>
+            <input 
+              type="text" 
+              required
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-bw-gold outline-none transition"
+              placeholder="Acme Corp"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-semibold text-bw-navy mb-1">Work Email</label>
             <input 
               type="email" 
@@ -52,7 +76,7 @@ export default function Signup() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-bw-gold outline-none transition"
-              placeholder="manager@bluewisdom.com"
+              placeholder="manager@company.com"
             />
           </div>
           <div>

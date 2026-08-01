@@ -118,6 +118,7 @@ export default function AssessmentForm({ onCancel }) {
       if (auth.currentUser) {
         await addDoc(collection(db, 'assessments'), {
           managerId: auth.currentUser.uid,
+          companyName: auth.currentUser.companyName || 'Unknown Company',
           employeeName: data.name,
           assessorEmail: data.assessorEmail,
           department: data.department,

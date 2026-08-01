@@ -45,7 +45,7 @@ export default function Dashboard({ onNewAssessment }) {
     // Fix: Removed orderBy('createdAt', 'desc') to avoid composite index error. We fetch more and sort locally.
     const q = query(
       collection(db, 'assessments'), 
-      where('managerId', '==', auth.currentUser.uid)
+      where('companyName', '==', auth.currentUser.companyName || 'Unknown Company')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -99,7 +99,7 @@ export default function Dashboard({ onNewAssessment }) {
     try {
       const q = query(
         collection(db, 'assessments'),
-        where('managerId', '==', auth.currentUser.uid)
+        where('companyName', '==', auth.currentUser.companyName || 'Unknown Company')
       );
 
       const documentSnapshots = await import('firebase/firestore').then(m => m.getDocs(q));
