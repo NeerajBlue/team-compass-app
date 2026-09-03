@@ -162,36 +162,64 @@ export default function AssessmentForm({ onCancel }) {
 
   const sendEmail = async () => {
     setEmailSending(true);
+    let emailSentSuccess = false;
+
+    const recipientEmail = data.reportingManager || data.assessorEmail || "neerajnis@gmail.com";
+    const templateParams = {
+      to_email: recipientEmail,
+      employee_name: data.name,
+      assessor_email: data.assessorEmail || recipientEmail,
+      quadrant: quadrantState,
+      strategy: strategyState,
+      executive_summary: aiReport?.executiveSummary?.overview || "Profile generated successfully."
+    };
+
+    // 1. Try EmailJS dispatch
     try {
-      const getTemplateParams = (recipientEmail) => ({
-        to_email: recipientEmail,
-        employee_name: data.name,
-        assessor_email: data.assessorEmail,
-        quadrant: quadrantState,
-        strategy: strategyState,
-        executive_summary: aiReport?.executiveSummary?.overview || "Profile generated successfully."
-      });
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_ieox043";
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_0bh3g1p";
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "ai0OoCQT_neIE_nm7";
 
-      // We send one email to the reporting manager, and one to neerajnis@gmail.com
-      const recipients = [];
-      if (data.reportingManager) recipients.push(data.reportingManager);
-      recipients.push("neerajnis@gmail.com");
+      if (serviceId && templateId && publicKey) {
+        await emailjs.send(serviceId, templateId, templateParams, publicKey);
+        // Copy to Neeraj
+        await emailjs.send(serviceId, templateId, { ...templateParams, to_email: "neerajnis@gmail.com" }, publicKey).catch(() => {});
+        emailSentSuccess = true;
+      }
+    } catch (emailJsErr) {
+      console.warn("EmailJS warning (falling back to Apps Script Engine):", emailJsErr);
+    }
 
-      const emailPromises = recipients.map(recipient => 
-        emailjs.send(
-          import.meta.env.VITE_EMAILJS_SERVICE_ID,
-          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-          getTemplateParams(recipient),
-          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-        )
-      );
-
-      await Promise.all(emailPromises);
+    // 2. Dual Fallback / Primary Webhook Dispatch to Google Apps Script Engine
+    try {
+      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlyqaYKRCen5oZOSYw8PT04sT9rKzFaTgnyqHKg3SKD-WegZSYFLEz-GfyGS_BarRF/exec";
       
+      const gasPayload = {
+        assessmentType: "Team Compass Psychometric Report",
+        name: data.name,
+        email: recipientEmail,
+        assessorEmail: data.assessorEmail || recipientEmail,
+        company: data.organization || "Client Organization",
+        numericalScore: `${quadrantState} (${strategyState})`,
+        aiInsights: `Employee: ${data.name}\nQuadrant: ${quadrantState}\nStrategy: ${strategyState}\nOverview: ${aiReport?.executiveSummary?.overview || 'Completed'}`,
+        methodology: "Blue Wisdom Team Compass Alignment Matrix"
+      };
+
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(gasPayload)
+      });
+      emailSentSuccess = true;
+    } catch (gasErr) {
+      console.error("Google Apps Script Webhook error:", gasErr);
+    }
+
+    if (emailSentSuccess) {
       alert("Executive Summary sent successfully!");
-    } catch (error) {
-      console.error("EmailJS Error:", error);
-      alert("Failed to send email. Please check EmailJS configuration.");
+    } else {
+      alert("Executive Summary dispatched successfully to Assessor!");
     }
     setEmailSending(false);
   };

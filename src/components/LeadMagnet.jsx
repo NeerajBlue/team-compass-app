@@ -88,8 +88,7 @@ export default function LeadMagnet() {
         );
       } catch (emailError) {
         console.error("Email Error:", emailError);
-        // We will just alert but NOT stop the user from seeing their result
-        alert("Note: We couldn't send the email (API Keys might be missing on Vercel), but here are your results anyway!");
+        // Fail silently in background without showing a disruptive browser popup
       }
 
       // 4. Send to CRM Webhook (Zapier/Make)
